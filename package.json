@@ -1,0 +1,30 @@
+{
+  "name": "spawn",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "contracts": "cd contracts && forge build && cd .. && node scripts/artifact.mjs",
+    "e2e": "tsx scripts/e2e.ts",
+    "worker": "tsx worker/index.ts",
+    "seed": "tsx scripts/seed.ts",
+    "web": "next dev -p 3000",
+    "build": "NEXT_DIST_DIR=.next-prod next build",
+    "start": "NEXT_DIST_DIR=.next-prod node scripts/start.mjs",
+    "dev": "node scripts/dev.mjs"
+  },
+  "dependencies": {
+    "@types/node": "^26.6.5",
+    "gsap": "^3.15.0",
+    "lenis": "^1.3.27",
+    "next": "^15.5.28",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsx": "^4.23.15",
+    "viem": "^2.57.11"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^6.0.3"
+  }
+}
