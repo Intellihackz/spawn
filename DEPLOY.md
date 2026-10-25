@@ -11,7 +11,7 @@ Spawn is one container: the web app and the worker run together (`scripts/start.
 ## 2. Create the service
 
 1. New project, Deploy from GitHub repo, pick the repo. Railway reads `railway.json` and builds the `Dockerfile`.
-2. Add a **volume** to the service and mount it at `/data`.
+2. Add a **volume** to the service and mount it at `/data` (Railway Volumes: the Dockerfile has no `VOLUME` line on purpose, because Railway rejects one). Do this before the first deploy.
 3. Set these variables (Variables tab). Do not set `PORT`: Railway sets it.
 
 | Variable | Value |

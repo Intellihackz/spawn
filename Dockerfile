@@ -1,4 +1,4 @@
-# Spawn: the web app and the worker in one container. Needs a persistent volume at /data and exactly one replica.
+# Spawn: the web app and the worker in one container. Needs a persistent volume mounted at /data (a Railway Volume) and exactly one replica.
 # The ledger contract is committed as contracts/Ledger.json, so nothing here compiles Solidity.
 
 # Stage 1: build the web app.
@@ -25,6 +25,6 @@ RUN curl -fsSL https://foundry.paradigm.xyz | bash \
 WORKDIR /app
 ENV NODE_ENV=production SPAWN_DATA=/data PORT=3000
 COPY --from=build /app /app
-VOLUME /data
+# No VOLUME instruction: Railway does not allow one. Mount a Railway Volume at /data in the service settings (see DEPLOY.md).
 EXPOSE 3000
 CMD ["node", "scripts/start.mjs"]
