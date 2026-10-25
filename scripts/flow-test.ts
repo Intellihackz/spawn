@@ -9,14 +9,15 @@ import { createPublicClient, createWalletClient, http, parseAbi, parseEther, typ
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 const REAL = "https://rpc.mainnet.chain.robinhood.com";
-const PORT = 8548;
+const PORT = 8548 + Math.floor(Math.random() * 400); // a random port, so a leftover fork from an earlier crashed run can never be mistaken for this one
 const RPC = `http://127.0.0.1:${PORT}`;
 const data = fs.mkdtempSync(path.join(os.tmpdir(), "spawn-flow-"));
 process.env.PONS_RPC = RPC;
 process.env.SPAWN_DATA = data;
 process.env.SPAWN_PORT_BASE = "19000";
 
-const fork = spawn("anvil", ["--fork-url", REAL, "--port", String(PORT), "--silent", "--host", "127.0.0.1"], { stdio: "ignore" });
+let fork = spawn("anvil", ["--fork-url", REAL, "--port", String(PORT), "--silent", "--host", "127.0.0.1"], { stdio: "ignore" });
+process.on("exit", () => fork.kill("SIGTERM"));
 const pub = createPublicClient({ transport: http(RPC) });
 for (let i = 0; i < 80; i++) {
   try {
@@ -40,7 +41,27 @@ const { verifyChain } = await import("../lib/verify.ts");
 
 const account = privateKeyToAccount(generatePrivateKey());
 const stranger = privateKeyToAccount(generatePrivateKey());
-await pub.request({ method: "anvil_setBalance", params: [account.address, "0x" + parseEther("10").toString(16)] } as never);
+// the public RPC prunes old state: a fork can start on a block it can no longer serve, so a failed first state read restarts the fork on a newer block
+for (let attempt = 1; ; attempt++) {
+  try {
+    await pub.request({ method: "anvil_setBalance", params: [account.address, "0x" + parseEther("10").toString(16)] } as never);
+    break;
+  } catch (e) {
+    if (attempt >= 6) throw e;
+    console.log(`fork state not available (try ${attempt}), restarting the fork`);
+    fork.kill("SIGTERM");
+    await new Promise((r) => setTimeout(r, 1500));
+    fork = spawn("anvil", ["--fork-url", REAL, "--port", String(PORT), "--silent", "--host", "127.0.0.1"], { stdio: "ignore" });
+    for (let i = 0; i < 80; i++) {
+      try {
+        await pub.getBlockNumber();
+        break;
+      } catch {
+        await new Promise((r) => setTimeout(r, 250));
+      }
+    }
+  }
+}
 const wallet = createWalletClient({ account, transport: http(RPC) });
 const post = (body: unknown) => reg.POST(new Request("http://x/api/register", { method: "POST", body: JSON.stringify(body), headers: { "x-forwarded-for": "t" + Math.random() } }));
 
